@@ -38,13 +38,21 @@ jobs:
       - name: Pack
         working-directory: packages/browser
         run: pnpm pack --pack-destination "$RUNNER_TEMP/pkg"
+      - name: Dist-tag
+        id: dist
+        working-directory: packages/browser
+        run: |
+          version=$(node -p "require('./package.json').version")
+          case "$version" in *-*) tag=next ;; *) tag=latest ;; esac
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Publishing $version with dist-tag $tag" >> "$GITHUB_STEP_SUMMARY"
       - name: Publish (dry run)
         working-directory: packages/browser
-        run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public --dry-run
+        run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public --tag "${{ steps.dist.outputs.tag }}" --dry-run
       - name: Publish
         if: inputs.publish && vars.NPM_PUBLISH_ENABLED == 'true'
         working-directory: packages/browser
-        run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public
+        run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public --tag "${{ steps.dist.outputs.tag }}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - uses: actions/upload-artifact@v4
