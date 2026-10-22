@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FuseScope browser e2e</title>
+    <script src="/dist/fusescope.min.js"></script>
+    <script>
+      const params = new URLSearchParams(location.search);
+      FuseScope.init({
+        applicationId: 'e2e-web',
+        publicKey: 'rum_pub_e2e',
+        endpoint: 'http://127.0.0.1:4401',
+        environment: 'test',
+        version: '9.9.9',
+        sessionSampleRate: Number(params.get('rate') ?? '1'),
+        propagateTraceHeaderCorsUrls: ['http://127.0.0.1:4401'],
+        privacy: { queryAllowlist: ['keep'] },
+        requireConsent: params.get('consent') === 'required',
+      });
+    </script>
+  </head>
+  <body>
+    <h1>FuseScope e2e page with enough text to paint a largest contentful element</h1>
+    <button id="buy" type="button">Buy</button>
+  </body>
+</html>
