@@ -6,3 +6,4 @@ playwright-report/
 *.tsbuildinfo
 sbom*.json
 .DS_Store
+packages/*/NOTICE
