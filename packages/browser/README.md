@@ -176,16 +176,18 @@ pnpm --filter @fusescope/browser test:e2e  # Playwright on ports 4400 and 4401
 ## Releasing
 
 `.github/workflows/release.yml` runs on manual dispatch only. It builds, tests, checks licences and CVEs,
-writes the SBOM (CycloneDX) and SRI hashes, packs, and runs `npm publish --provenance --dry-run`. It does
-not publish until:
+writes the SBOM (CycloneDX) and SRI hashes, packs, dry-runs, and publishes with provenance. The dist-tag
+is `next` for prereleases and `latest` otherwise.
 
-1. the `@fusescope` npm organisation exists, with this package created in it;
-2. an `NPM_TOKEN` secret (automation token, or npm trusted publishing configured for this repository and
-   the `release.yml` workflow) is added to the `npm` environment of this repository;
-3. the repository variable `NPM_PUBLISH_ENABLED` is set to `true`;
-4. the workflow is dispatched with `publish` checked.
+Publishing uses npm trusted publishing (OIDC): no npm token is stored. It needs:
 
-Provenance needs the `id-token: write` permission the workflow already has, and a public repository.
+1. a trusted publisher on the npm package for `fuseone-io/fusescope-sdk`, workflow `release.yml`,
+   environment `npm`;
+2. the `NPM_PUBLISH_ENABLED` variable set to `true` in the `npm` environment;
+3. the run dispatched from `main` with `publish` checked, and approved by an `npm` environment reviewer.
+
+A new package must exist on npm before a trusted publisher can be added to it, so its first version is
+published once with a short-lived granular token, and the token is revoked afterwards.
 
 ## Licence
 

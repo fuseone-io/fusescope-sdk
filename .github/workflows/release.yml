@@ -1,7 +1,6 @@
 name: release
 
-# Manual only. Publishing stays off until the npm org and trusted publishing are
-# set up: see "Releasing" in packages/browser/README.md.
+# Manual only. Publishes through npm trusted publishing (OIDC), so no npm token is stored.
 on:
   workflow_dispatch:
     inputs:
@@ -26,6 +25,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
           registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@^11.5.1
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint && pnpm typecheck && pnpm test
       - run: pnpm build
@@ -53,8 +53,6 @@ jobs:
         if: inputs.publish && vars.NPM_PUBLISH_ENABLED == 'true'
         working-directory: packages/browser
         run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public --tag "${{ steps.dist.outputs.tag }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
           name: release-browser
