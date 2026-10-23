@@ -1,5 +1,5 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { join, sep } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import type { Rejection } from './batch.js';
 import { debugIdFromMap, debugIdFromSource } from './debugid.js';
 import { matchesAny } from './glob.js';
@@ -31,12 +31,7 @@ export async function discoverSourceMaps(
   const entries = await readdir(dir, { recursive: true, withFileTypes: true });
   const relPaths = entries
     .filter((e) => e.isFile())
-    .map((e) =>
-      join(e.parentPath, e.name)
-        .slice(dir.replace(/[\\/]+$/, '').length + 1)
-        .split(sep)
-        .join('/'),
-    )
+    .map((e) => relative(dir, join(e.parentPath, e.name)).split(sep).join('/'))
     .filter((rel) => matchesAny(rel, opts.include) && !matchesAny(rel, opts.ignore))
     .sort();
 
