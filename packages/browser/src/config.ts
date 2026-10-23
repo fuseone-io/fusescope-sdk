@@ -39,7 +39,7 @@ export interface BrowserConfig {
   service?: string;
   /** `deployment.environment.name`, e.g. `production`. */
   environment?: string;
-  /** `service.version`: the release of the instrumented app. */
+  /** `service.version`: the release of the instrumented app; must equal the source-map upload release. */
   version?: string;
   /** Share of sessions recorded, 0 to 1. Default 1. Unsampled sessions send nothing and no `traceparent`. */
   sessionSampleRate?: number;
