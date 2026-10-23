@@ -19,7 +19,11 @@ export interface ViewOptions {
 
 type HistoryMethod = 'pushState' | 'replaceState';
 
-/** One `view` span per History API navigation; it ends at the next navigation or when the page is hidden. */
+/**
+ * One `view` span per History API navigation, so its duration is the time on view: it ends at the next
+ * navigation, when the page is hidden or unloaded, or on shutdown. Only the first view is an `initial_load`;
+ * a view restarted when the page is shown again is a `route_change` with navigation type `restore`.
+ */
 export function installViews(tracer: Tracer, o: ViewOptions): ViewTracker {
   let current: { span: Span; path: string; route: string } | undefined;
   let lastRoute: string | undefined;
@@ -38,6 +42,7 @@ export function installViews(tracer: Tracer, o: ViewOptions): ViewTracker {
           'url.full': scrubUrl(location.href, o.allowedQueryParams),
           'fusescope.rum.view.route': route,
           'fusescope.rum.view.navigation_type': navigationType,
+          'fusescope.rum.view.loading_type': navigationType === 'load' ? 'initial_load' : 'route_change',
         },
       },
       ROOT_CONTEXT,
@@ -67,6 +72,7 @@ export function installViews(tracer: Tracer, o: ViewOptions): ViewTracker {
     else if (!current) start('restore');
   };
   window.addEventListener('popstate', onPop);
+  window.addEventListener('pagehide', end);
   document.addEventListener('visibilitychange', onVisibility);
   start('load');
   const loadRoute = lastRoute ?? o.routeOf(location.pathname);
@@ -87,6 +93,7 @@ export function installViews(tracer: Tracer, o: ViewOptions): ViewTracker {
       history.pushState = originals.pushState;
       history.replaceState = originals.replaceState;
       window.removeEventListener('popstate', onPop);
+      window.removeEventListener('pagehide', end);
       document.removeEventListener('visibilitychange', onVisibility);
     },
   };
