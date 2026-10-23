@@ -46,6 +46,7 @@ function otlpExporters(c: ResolvedConfig): Exporters {
 export function startRum(c: ResolvedConfig, exporters: Exporters = otlpExporters(c)): Rum {
   const sessions = new SessionManager({ ...c.session, sampleRate: c.sessionSampleRate });
   let user: Attributes = {};
+  let userCalls = 0;
   let route: () => string | undefined = () => undefined;
   const ctx: RumContext = {
     sessions,
@@ -100,13 +101,17 @@ export function startRum(c: ResolvedConfig, exporters: Exporters = otlpExporters
         attributes: { ...attributes, 'fusescope.rum.action.type': 'custom', 'fusescope.rum.action.name': name },
       }),
     setView: (r) => views.setView(r),
+    // Until the hash resolves, records carry no user rather than the previous one; only the last call wins.
     async setUser(next) {
+      const call = ++userCalls;
+      user = {};
+      let attrs: Attributes = {};
       try {
-        user = await userAttributes(next, c.privacy.hashUserId);
+        attrs = await userAttributes(next, c.privacy.hashUserId);
       } catch {
-        user = {};
         console.warn('FuseScope: setUser() needs a secure context (HTTPS) to hash the user id; user not set');
       }
+      if (call === userCalls) user = attrs;
     },
     async shutdown() {
       deregister();

@@ -5,7 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { type RumContext, RumLogProcessor, rumSpanProcessors } from '../src/processors';
 import type { SessionRecord } from '../src/session';
 
-function rumContext(overrides: Partial<SessionRecord> = {}): RumContext {
+function rumContext(
+  overrides: Partial<SessionRecord> = {},
+  user: () => Record<string, string> = () => ({ 'user.id': 'h' }),
+): RumContext {
   const session: SessionRecord = {
     id: 'a'.repeat(32),
     previousId: 'b'.repeat(32),
@@ -17,7 +20,7 @@ function rumContext(overrides: Partial<SessionRecord> = {}): RumContext {
   return {
     sessions: { get: () => session, getSessionId: () => session.id },
     route: () => '/orders/:id',
-    user: () => ({ 'user.hash': 'h' }),
+    user,
     allowedQueryParams: ['keep'],
   };
 }
@@ -46,8 +49,17 @@ describe('span processors', () => {
       'session.id': 'a'.repeat(32),
       'session.previous_id': 'b'.repeat(32),
       'fusescope.rum.view.route': '/orders/:id',
-      'user.hash': 'h',
+      'user.id': 'h',
     });
+  });
+
+  it('add the user to spans that started before it was set', () => {
+    let user = {};
+    const { tracer, exporter } = traces(rumContext({}, () => user));
+    const span = tracer.startSpan('view', {}, ROOT_CONTEXT);
+    user = { 'user.id': 'h' };
+    span.end();
+    expect(exporter.getFinishedSpans()[0]?.attributes['user.id']).toBe('h');
   });
 
   it('keep attributes the span already has', () => {
