@@ -22,8 +22,9 @@ npm install @fusescope/browser
 import { init } from '@fusescope/browser';
 
 init({
-  applicationId: 'shop-web',
+  applicationId: '01a16431-12ca-7064-bae9-6ac64cf20a29', // from Frontend › Applications › Setup
   publicKey: 'rum_pub_…',
+  service: 'shop-web',
   endpoint: 'https://fusescope.example.com',
   environment: 'production',
   version: '1.4.0',
@@ -42,7 +43,7 @@ A versioned, immutable CDN build with SRI hashes, and the same bundle served by 
 ```html
 <script src="…/fusescope.min.js" integrity="sha384-…" crossorigin="anonymous"></script>
 <script>
-  FuseScope.init({ applicationId: 'shop-web', publicKey: 'rum_pub_…', endpoint: 'https://fusescope.example.com' });
+  FuseScope.init({ applicationId: '01a16431-12ca-7064-bae9-6ac64cf20a29', publicKey: 'rum_pub_…', service: 'shop-web', endpoint: 'https://fusescope.example.com' });
 </script>
 ```
 
@@ -64,7 +65,7 @@ Calls made before collection starts are dropped, except `setUser`, which is appl
 
 | Option | Default | |
 |---|---|---|
-| `applicationId` | required | RUM application id from FuseScope's Setup screen. Also `service.name` unless `service` is set. |
+| `applicationId` | required | RUM application id (a UUID) from FuseScope's Setup screen, not its name. Also `service.name` unless `service` is set, so set `service` too. |
 | `publicKey` | required | Public, write-only key (`rum_pub_…`). Safe to ship in a bundle. |
 | `endpoint` | required | FuseScope base URL. Data goes to `<endpoint>/rum/v1/traces` and `<endpoint>/rum/v1/logs`. |
 | `service` | `applicationId` | `service.name`. |
