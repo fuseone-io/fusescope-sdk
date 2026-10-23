@@ -14,9 +14,12 @@ export async function list(cmd: ListCommand, io: Io): Promise<number> {
     io.stdout(`${JSON.stringify(data, null, 2)}\n`);
     return EXIT.ok;
   }
+  const { releases, files } = (data ?? {}) as { releases?: unknown; files?: unknown };
   const rows = Array.isArray(data)
     ? data
-    : ((data as { releases?: unknown; files?: unknown })?.releases ?? (data as { files?: unknown })?.files);
+    : cmd.release && Array.isArray(files) && files.length
+      ? files
+      : (releases ?? files);
   if (!Array.isArray(rows) || !rows.length) {
     io.stdout(cmd.release ? `No source maps for release ${cmd.release}.\n` : 'No source maps uploaded.\n');
     return EXIT.ok;
