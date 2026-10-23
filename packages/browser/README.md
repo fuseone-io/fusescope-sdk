@@ -223,7 +223,7 @@ Publishing uses npm trusted publishing (OIDC): no npm token is stored. It needs:
 1. a trusted publisher on the npm package for `fuseone-io/fusescope-sdk`, workflow `release.yml`,
    environment `npm`;
 2. the `NPM_PUBLISH_ENABLED` variable set to `true` in the `npm` environment;
-3. the run dispatched from `main` with `publish` checked, and approved by an `npm` environment reviewer.
+3. the run dispatched from `main` with `package` set to `browser` and `publish` checked, and approved by an `npm` environment reviewer.
 
 A new package must exist on npm before a trusted publisher can be added to it, so its first version is
 published once with a short-lived granular token, and the token is revoked afterwards.
