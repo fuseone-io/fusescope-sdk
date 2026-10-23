@@ -8,7 +8,7 @@ export interface PrivacyConfig {
   dropQuery?: boolean;
   /** Query parameters kept when `dropQuery` is on. */
   queryAllowlist?: string[];
-  /** `setUser()` sends a SHA-256 of the id as `user.hash` instead of `user.id`. Default `true`. */
+  /** `setUser()` sends the hex SHA-256 of the id as `user.id` instead of the raw id. Default `true`. */
   hashUserId?: boolean;
 }
 

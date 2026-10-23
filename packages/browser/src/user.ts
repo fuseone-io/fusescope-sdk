@@ -9,9 +9,11 @@ async function sha256(text: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** `crypto.subtle` exists only in secure contexts; hashing fails there rather than sending the raw id. */
+/**
+ * `user.id` holds the hex SHA-256 of the id unless `hash` is false.
+ * `crypto.subtle` exists only in secure contexts; hashing fails there rather than sending the raw id.
+ */
 export async function userAttributes(user: User | null, hash: boolean): Promise<Attributes> {
   if (!user) return {};
-  if (!hash) return { 'user.id': user.id };
-  return { 'user.hash': await sha256(user.id) };
+  return { 'user.id': hash ? await sha256(user.id) : user.id };
 }

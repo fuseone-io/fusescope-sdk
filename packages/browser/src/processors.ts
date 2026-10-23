@@ -31,7 +31,9 @@ export class RumSpanProcessor implements SpanProcessor {
     span.setAttributes({ ...rumAttributes(this.ctx), ...span.attributes });
   }
 
+  /** Spans that started before `setUser()` resolved, such as the initial view, get the user on end. */
   onEnding(span: Span): void {
+    if (span.attributes['user.id'] === undefined) span.setAttributes(this.ctx.user());
     span.setAttributes(scrubAttributes(span.attributes, this.ctx.allowedQueryParams));
     const name = scrubText(span.name, this.ctx.allowedQueryParams);
     if (name !== span.name) span.updateName(name);

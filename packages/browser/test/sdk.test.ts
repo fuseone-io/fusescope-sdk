@@ -84,6 +84,40 @@ describe('startRum', () => {
     expect(logs.getFinishedLogRecords()[0]?.attributes['user.id']).toBe('u-1');
   });
 
+  const ALICE = '2bd806c97f0e00af1a1fc3328fa763a9269723c8db8fac4f93af71db186d6e90';
+
+  it('sends the SHA-256 of the user id as user.id by default', async () => {
+    const r = start();
+    await r.setUser({ id: 'alice' });
+    r.addAction('a');
+    await r.shutdown();
+    const [record] = logs.getFinishedLogRecords();
+    expect(record?.attributes['user.id']).toBe(ALICE);
+    expect(record?.attributes).not.toHaveProperty('user.hash');
+    expect(spans.getFinishedSpans()[0]?.attributes['user.id']).toBe(ALICE);
+  });
+
+  it('never stamps a stale user while the hash is pending', async () => {
+    const r = start();
+    await r.setUser({ id: 'old' });
+    const pending = r.setUser({ id: 'alice' });
+    r.addAction('during');
+    await pending;
+    r.addAction('after');
+    await r.shutdown();
+    expect(logs.getFinishedLogRecords().map((l) => l.attributes['user.id'])).toEqual([undefined, ALICE]);
+  });
+
+  it('keeps the last setUser call when hashes resolve late', async () => {
+    const r = start();
+    const pending = r.setUser({ id: 'alice' });
+    const cleared = r.setUser(null);
+    await Promise.all([pending, cleared]);
+    r.addAction('a');
+    await r.shutdown();
+    expect(logs.getFinishedLogRecords()[0]?.attributes).not.toHaveProperty('user.id');
+  });
+
   it('names the current view with setView', async () => {
     const r = start();
     r.setView('/products/[slug]');

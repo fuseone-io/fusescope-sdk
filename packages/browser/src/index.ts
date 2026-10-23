@@ -49,7 +49,7 @@ export async function setConsent(granted: boolean): Promise<void> {
   else await stop();
 }
 
-/** Identifies the user (opt-in). Sent as a SHA-256 `user.hash` unless `privacy.hashUserId` is `false`. `null` clears it. */
+/** Identifies the user (opt-in). `user.id` is the SHA-256 of the id unless `privacy.hashUserId` is `false`. `null` clears it. */
 export function setUser(user: User | null): Promise<void> {
   pendingUser = user;
   return rum ? rum.setUser(user) : Promise.resolve();
