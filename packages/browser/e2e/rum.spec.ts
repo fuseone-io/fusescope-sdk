@@ -35,7 +35,7 @@ test('sampled session: attributes, scrubbing, propagation and events', async ({ 
       throw new Error('boom at /checkout?card=4111');
     });
   });
-  await page.click('#buy');
+  for (const target of ['#buy', '#add-to-cart span', 'a.nav-link', '.btn', '#email']) await page.click(target);
   await page.waitForTimeout(200);
   await hide(page);
 
@@ -78,6 +78,7 @@ test('sampled session: attributes, scrubbing, propagation and events', async ({ 
   // Views with route templates.
   const views = allSpans.filter((s) => s.name === 'view');
   expect(views.map((v) => v.attributes['fusescope.rum.view.route'])).toEqual(['/products/:id', '/orders/:id']);
+  expect(views.map((v) => v.attributes['fusescope.rum.view.loading_type'])).toEqual(['initial_load', 'route_change']);
   expect(views[0]?.attributes['url.full']).toBe('http://localhost:4400/products/42?keep=1');
 
   // HTTP spans, scrubbed; traceparent to same origin and allow-listed origins only.
@@ -104,15 +105,22 @@ test('sampled session: attributes, scrubbing, propagation and events', async ({ 
     'fusescope.rum.error.source': 'onerror',
     'fusescope.rum.view.route': '/orders/:id',
   });
-  expect(byEvent('browser.user_action.click')[0]?.attributes).toMatchObject({
-    'fusescope.rum.action.type': 'click',
-    'browser.css_selector': '#buy',
-  });
+  expect(error?.attributes['exception.stacktrace']).toMatch(/^Error: boom at \/checkout\n\s+at .+:\d+:\d+/);
+  const clicks = byEvent('browser.user_action.click');
+  expect(clicks[0]?.attributes).toMatchObject({ 'fusescope.rum.action.type': 'click', 'browser.css_selector': '#buy' });
+  expect(clicks.map((c) => c.attributes['fusescope.rum.action.target'])).toEqual([
+    'button#buy',
+    'button#add-to-cart',
+    'a.nav-link',
+    'div[data-fusescope-action="checkout"]',
+    'input#email',
+  ]);
   expect(byEvent('fusescope.rum.action')[0]?.attributes).toMatchObject({
     'fusescope.rum.action.name': 'checkout',
     'app.cart.size': 2,
-    'user.hash': '2bd806c97f0e00af1a1fc3328fa763a9269723c8db8fac4f93af71db186d6e90',
+    'user.id': '2bd806c97f0e00af1a1fc3328fa763a9269723c8db8fac4f93af71db186d6e90',
   });
+  for (const l of logs) expect(l.attributes).not.toHaveProperty('user.hash');
   expect(byEvent('browser.navigation_timing')).toHaveLength(1);
 
   // Page-load vitals keep the route they were loaded on, even after navigating.
@@ -121,7 +129,8 @@ test('sampled session: attributes, scrubbing, propagation and events', async ({ 
 
   // No PII left anywhere in the payloads.
   const wire = JSON.stringify(r.exports.map((e) => e.body));
-  for (const pii of ['a@b.c', 'x@y.z', 'secret', 'card=4111', 'frag', '"alice"']) expect(wire).not.toContain(pii);
+  for (const pii of ['a@b.c', 'x@y.z', 'secret', 'card=4111', 'frag', '"alice"', 'typed@', 'Add to cart'])
+    expect(wire).not.toContain(pii);
 });
 
 test('unsampled session: nothing exported and no traceparent', async ({ page, request }) => {
@@ -156,4 +165,39 @@ test('consent: nothing is collected before setConsent(true)', async ({ page, req
   const urls = spans(await received(request)).map((s) => s.attributes['url.full']);
   expect(urls).toContain('http://localhost:4400/api/after');
   expect(urls).not.toContain('http://localhost:4400/api/before');
+});
+
+test('time on view: views end on navigation and on pagehide', async ({ page, request }) => {
+  await page.goto('/a');
+  await page.waitForTimeout(300);
+  await page.evaluate(() => history.pushState(null, '', '/b'));
+  await page.waitForTimeout(200);
+  await page.goto('/c');
+  await expect
+    .poll(async () => spans(await received(request)).filter((s) => s.name === 'view').length, { timeout: 10_000 })
+    .toBe(2);
+  await page.evaluate(() => FuseScope.shutdown());
+  const views = spans(await received(request)).filter((s) => s.name === 'view');
+  expect(views.map((v) => [v.attributes['url.path'], v.attributes['fusescope.rum.view.loading_type']])).toEqual([
+    ['/a', 'initial_load'],
+    ['/b', 'route_change'],
+    ['/c', 'initial_load'],
+  ]);
+  expect(views[0]?.durationMs).toBeGreaterThanOrEqual(300);
+  expect(views[1]?.durationMs).toBeGreaterThanOrEqual(200);
+});
+
+test('session rotates after inactivity and links the previous one', async ({ page, request }) => {
+  await page.clock.install();
+  await page.goto('/a');
+  await page.evaluate(() => FuseScope.addAction('before'));
+  await page.clock.fastForward('16:00');
+  await page.evaluate(() => FuseScope.addAction('after'));
+  await page.evaluate(() => FuseScope.shutdown());
+  const actions = logRecords(await received(request)).filter((l) => l.eventName === 'fusescope.rum.action');
+  const [before, after] = actions.map((a) => a.attributes);
+  expect(actions.map((a) => a.attributes['fusescope.rum.action.name'])).toEqual(['before', 'after']);
+  expect(after?.['session.id']).toMatch(/^[0-9a-f]{32}$/);
+  expect(after?.['session.id']).not.toBe(before?.['session.id']);
+  expect(after?.['session.previous_id']).toBe(before?.['session.id']);
 });
