@@ -19,6 +19,7 @@ export interface Received {
 
 export interface Span {
   name: string;
+  durationMs: number;
   attributes: Attrs;
   resource: Attrs;
 }
@@ -44,12 +45,15 @@ export function spans(r: Received): Span[] {
       (
         e.body.resourceSpans as {
           resource: { attributes: KeyValue[] };
-          scopeSpans: { spans: { name: string; attributes: KeyValue[] }[] }[];
+          scopeSpans: {
+            spans: { name: string; startTimeUnixNano: string; endTimeUnixNano: string; attributes: KeyValue[] }[];
+          }[];
         }[]
       ).flatMap((rs) =>
         rs.scopeSpans.flatMap((ss) =>
           ss.spans.map((s) => ({
             name: s.name,
+            durationMs: Number((BigInt(s.endTimeUnixNano) - BigInt(s.startTimeUnixNano)) / 1_000_000n),
             attributes: attrs(s.attributes),
             resource: attrs(rs.resource.attributes),
           })),
