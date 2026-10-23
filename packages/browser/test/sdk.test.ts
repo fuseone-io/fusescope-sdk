@@ -1,6 +1,7 @@
+import { context, trace } from '@opentelemetry/api';
 import { InMemoryLogRecordExporter } from '@opentelemetry/sdk-logs';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type BrowserConfig, resolveConfig } from '../src/config';
 import { type Rum, startRum } from '../src/sdk';
 
@@ -116,6 +117,42 @@ describe('startRum', () => {
     r.addAction('a');
     await r.shutdown();
     expect(logs.getFinishedLogRecords()[0]?.attributes).not.toHaveProperty('user.id');
+  });
+
+  it('stamps errors with the current route', async () => {
+    const r = start();
+    history.pushState(null, '', '/orders/7');
+    r.addError(new Error('x'));
+    await r.shutdown();
+    expect(logs.getFinishedLogRecords()[0]?.attributes['fusescope.rum.view.route']).toBe('/orders/:id');
+  });
+
+  it('links an error reported inside a span to its trace', async () => {
+    const r = start();
+    const span = trace.getTracer('t').startSpan('GET');
+    context.with(trace.setSpan(context.active(), span), () => r.addError(new Error('x')));
+    span.end();
+    await r.shutdown();
+    expect(logs.getFinishedLogRecords()[0]?.spanContext).toMatchObject({
+      traceId: span.spanContext().traceId,
+      spanId: span.spanContext().spanId,
+    });
+  });
+
+  it('rotates the session after inactivity', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      const r = start();
+      r.addAction('before');
+      vi.advanceTimersByTime(16 * 60_000);
+      r.addAction('after');
+      await r.shutdown();
+    } finally {
+      vi.useRealTimers();
+    }
+    const [before, after] = logs.getFinishedLogRecords().map((l) => l.attributes);
+    expect(after?.['session.id']).not.toBe(before?.['session.id']);
+    expect(after?.['session.previous_id']).toBe(before?.['session.id']);
   });
 
   it('names the current view with setView', async () => {
