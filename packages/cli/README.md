@@ -19,13 +19,13 @@ npm install --save-dev @fusescope/cli
 ```bash
 export FUSESCOPE_URL=https://fusescope.example.com
 export FUSESCOPE_API_KEY=…            # service account key, Editor role
-export FUSESCOPE_APP=web-shop         # RUM application ID
+export FUSESCOPE_APP=0193f2c4-7d1e-7a40-9b2f-5c8e1d3a6b70  # RUM application ID
 npx fusescope sourcemaps upload ./dist --release 1.8.0
 ```
 
 ```text
 [1/1] 14 files, 6.2 MB uploaded
-Uploaded to web-shop · release 1.8.0 · 14 files · 6.2 MB
+Uploaded to 0193f2c4-7d1e-7a40-9b2f-5c8e1d3a6b70 · release 1.8.0 · 14 files · 6.2 MB
 ```
 
 ### The release rule
@@ -35,7 +35,7 @@ FuseScope looks up maps by an error's `service.version`; with any other value it
 minified. Use one source for both, such as the `version` in `package.json`:
 
 ```ts
-init({ applicationId: 'web-shop', publicKey: 'rum_pub_…', endpoint: 'https://fusescope.example.com',
+init({ applicationId: '0193f2c4-7d1e-7a40-9b2f-5c8e1d3a6b70', publicKey: 'rum_pub_…', endpoint: 'https://fusescope.example.com',
   version: import.meta.env.VITE_APP_VERSION });
 ```
 
@@ -56,7 +56,7 @@ When a map has a `debugId` (or its bundle ends with a `//# debugId=` comment), i
 |---|---|---|---|
 | `<dir>` | | required | Build output directory. |
 | `--release <v>` | `FUSESCOPE_RELEASE` | required | Release; equals `service.version`. |
-| `--app <id>` | `FUSESCOPE_APP` | required | RUM application ID. |
+| `--app <id>` | `FUSESCOPE_APP` | required | RUM application ID, a UUID; not its name. |
 | `--url <base>` | `FUSESCOPE_URL` | required | FuseScope base URL. |
 | `--api-key <key>` | `FUSESCOPE_API_KEY` | required | Service account API key, Editor role. Prefer the variable: flags show up in shell history and process lists. |
 | `--url-prefix <p>` | | `/` | Path (or URL) the bundles are served from. |
@@ -142,7 +142,7 @@ Keep the key in a secret and pass everything through the environment. GitHub Act
 - run: npx fusescope sourcemaps upload ./dist --release "$GITHUB_SHA" --delete-after
   env:
     FUSESCOPE_URL: https://fusescope.example.com
-    FUSESCOPE_APP: web-shop
+    FUSESCOPE_APP: 0193f2c4-7d1e-7a40-9b2f-5c8e1d3a6b70
     FUSESCOPE_API_KEY: ${{ secrets.FUSESCOPE_API_KEY }}
 - run: ./deploy.sh ./dist
 ```
