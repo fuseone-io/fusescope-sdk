@@ -1,0 +1,51 @@
+{
+  "name": "@fusescope/cli",
+  "version": "0.1.0-beta.0",
+  "description": "FuseScope command line: upload source maps for Real User Monitoring",
+  "license": "Apache-2.0",
+  "author": "FuseOne",
+  "homepage": "https://github.com/fuseone-io/fusescope-sdk/tree/main/packages/cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fuseone-io/fusescope-sdk.git",
+    "directory": "packages/cli"
+  },
+  "bugs": "https://github.com/fuseone-io/fusescope-sdk/issues",
+  "keywords": [
+    "fusescope",
+    "rum",
+    "sourcemaps",
+    "source-maps",
+    "cli",
+    "observability"
+  ],
+  "type": "module",
+  "bin": {
+    "fusescope": "./dist/bin.js"
+  },
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepack": "cp ../../NOTICE NOTICE"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}
