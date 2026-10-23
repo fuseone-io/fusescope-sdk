@@ -192,6 +192,25 @@ describe('sourcemaps list and delete', () => {
     expect(out).toMatch(/14/);
   });
 
+  it('lists the files of one release', async () => {
+    stub.replies.push({
+      status: 200,
+      body: {
+        status: 'success',
+        data: {
+          releases: [{ release: '1.8.0', files: 2, sizeBytes: 900 }],
+          files: [
+            { path: '/assets/index-abc.js.map', sizeBytes: 600 },
+            { path: '/assets/vendor-def.js.map', sizeBytes: 300 },
+          ],
+        },
+      },
+    });
+    expect(await run('sourcemaps', 'list', '--release', '1.8.0')).toBe(0);
+    expect(out).toMatch(/\/assets\/index-abc\.js\.map/);
+    expect(out).toMatch(/\/assets\/vendor-def\.js\.map/);
+  });
+
   it('lists as JSON', async () => {
     stub.replies.push({ status: 200, body: { status: 'success', data: [{ release: '1' }] } });
     expect(await run('sourcemaps', 'list', '--json', '--release', '1')).toBe(0);
