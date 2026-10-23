@@ -34,7 +34,15 @@ export function captureError(logger: Logger, error: unknown, source: ErrorSource
  * `fusescope.rum.error.source` needs.
  */
 export function installErrorCapture(logger: Logger): () => void {
-  const onError = (e: ErrorEvent) => captureError(logger, e.error ?? e.message, 'onerror');
+  const onError = (e: ErrorEvent) =>
+    captureError(
+      logger,
+      e.error ?? e.message,
+      'onerror',
+      e.error instanceof Error || !e.filename
+        ? undefined
+        : { 'exception.stacktrace': `${e.message}\n    at ${e.filename}:${e.lineno}:${e.colno}` },
+    );
   const onRejection = (e: PromiseRejectionEvent) => captureError(logger, e.reason, 'unhandledrejection');
   window.addEventListener('error', onError);
   window.addEventListener('unhandledrejection', onRejection);
