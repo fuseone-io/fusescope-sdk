@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type KeyValueStore, SessionManager, STORAGE_KEY } from '../src/session';
 
 const options = { inactivityTimeoutMs: 15 * 60_000, maxDurationMs: 4 * 3_600_000, sampleRate: 1 };
@@ -98,5 +98,41 @@ describe('SessionManager', () => {
     store.value = '{not json';
     const { make } = harness(store);
     expect(make().get().id).toHaveLength(32);
+  });
+});
+
+describe('SessionManager on the wall clock', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const make = () => new SessionManager(options, memoryStore());
+
+  it('rotates after inactivity with session.previous_id', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const m = make();
+    const first = m.get();
+    vi.advanceTimersByTime(14 * 60_000);
+    expect(m.get().id).toBe(first.id);
+    vi.advanceTimersByTime(2 * 60_000);
+    const next = m.get();
+    expect(next.id).toMatch(/^[0-9a-f]{32}$/);
+    expect(next.id).not.toBe(first.id);
+    expect(next.previousId).toBe(first.id);
+  });
+
+  it('rotates at max duration with session.previous_id', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const m = make();
+    const first = m.get().id;
+    for (let t = 0; t < 4 * 60; t += 10) {
+      vi.advanceTimersByTime(10 * 60_000);
+      m.touch();
+    }
+    expect(m.get().id).toBe(first);
+    vi.advanceTimersByTime(10 * 60_000);
+    const next = m.touch();
+    expect(next.id).not.toBe(first);
+    expect(next.previousId).toBe(first);
   });
 });
