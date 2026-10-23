@@ -33,6 +33,11 @@ beforeEach(() => {
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
 describe('discoverSourceMaps', () => {
+  it('keeps relative paths for a dir given as ./dist', async () => {
+    const { files } = await discoverSourceMaps(`${dir}/./`, defaults);
+    expect(files.map((f) => f.relPath)).toContain('assets/index-abc.js.map');
+  });
+
   it('finds JS source maps with URL paths and debug IDs, sorted', async () => {
     const { files, invalid } = await discoverSourceMaps(dir, defaults);
     expect(files.map(({ relPath, urlPath, debugId }) => ({ relPath, urlPath, debugId }))).toEqual([
