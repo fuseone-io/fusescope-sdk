@@ -1,6 +1,8 @@
 name: release
 
-# Manual only. Publishes through npm trusted publishing (OIDC), so no npm token is stored.
+# Manual only. Publishes through npm trusted publishing (OIDC). A brand-new package can't have a
+# trusted publisher yet, so its first version uses `bootstrap` with a short-lived NPM_TOKEN secret,
+# which is deleted (and the token revoked) right after.
 on:
   workflow_dispatch:
     inputs:
@@ -11,6 +13,10 @@ on:
         default: browser
       publish:
         description: Publish to npm (also needs the NPM_PUBLISH_ENABLED variable set to true)
+        type: boolean
+        default: false
+      bootstrap:
+        description: First publish of a new package, with the short-lived NPM_TOKEN secret instead of OIDC
         type: boolean
         default: false
 
@@ -61,7 +67,15 @@ jobs:
       - name: Publish
         if: inputs.publish && vars.NPM_PUBLISH_ENABLED == 'true'
         working-directory: packages/${{ inputs.package }}
-        run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public --tag "${{ steps.dist.outputs.tag }}"
+        env:
+          BOOTSTRAP_TOKEN: ${{ inputs.bootstrap && secrets.NPM_TOKEN || '' }}
+        run: |
+          if [ -n "$BOOTSTRAP_TOKEN" ]; then
+            npmrc="$RUNNER_TEMP/bootstrap.npmrc"
+            printf '//registry.npmjs.org/:_authToken=%s\n' "$BOOTSTRAP_TOKEN" > "$npmrc"
+            export NPM_CONFIG_USERCONFIG="$npmrc"
+          fi
+          npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public --tag "${{ steps.dist.outputs.tag }}"
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ inputs.package }}

@@ -225,8 +225,9 @@ Publishing uses npm trusted publishing (OIDC): no npm token is stored. It needs:
 2. the `NPM_PUBLISH_ENABLED` variable set to `true` in the `npm` environment;
 3. the run dispatched from `main` with `package` set to `browser` and `publish` checked, and approved by an `npm` environment reviewer.
 
-A new package must exist on npm before a trusted publisher can be added to it, so its first version is
-published once with a short-lived granular token, and the token is revoked afterwards.
+A new package must exist on npm before a trusted publisher can be added to it. Its first version is
+published by dispatching the workflow with `bootstrap` checked and a short-lived granular token in the
+`NPM_TOKEN` secret; delete the secret and revoke the token afterwards.
 
 ## Licence
 
