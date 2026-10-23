@@ -52,4 +52,21 @@ describe('installErrorCapture', () => {
     window.dispatchEvent(new ErrorEvent('error', { error: new RangeError('r'), message: 'r' }));
     expect(exporter.getFinishedLogRecords()).toHaveLength(1);
   });
+
+  it('builds a stack trace from the error location when there is no Error', () => {
+    const { exporter, logger } = harness();
+    uninstall = installErrorCapture(logger);
+    window.dispatchEvent(
+      new ErrorEvent('error', {
+        message: 'Script error.',
+        filename: 'https://a.example/app.min.js',
+        lineno: 1,
+        colno: 4821,
+      }),
+    );
+    expect(exporter.getFinishedLogRecords()[0]?.attributes).toMatchObject({
+      'exception.message': 'Script error.',
+      'exception.stacktrace': 'Script error.\n    at https://a.example/app.min.js:1:4821',
+    });
+  });
 });
