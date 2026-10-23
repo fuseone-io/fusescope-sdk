@@ -84,10 +84,12 @@ export function startRum(c: ResolvedConfig, exporters: Exporters = otlpExporters
   const touch = () => sessions.touch();
   for (const type of ACTIVITY_EVENTS) window.addEventListener(type, touch, { passive: true, capture: true });
   // Registered after the view tracker, so the view ended on hide is part of the flush.
+  const flush = () => void Promise.all([spanExport.forceFlush(), logExport.forceFlush()]);
   const flushOnHide = () => {
-    if (document.visibilityState === 'hidden') void Promise.all([spanExport.forceFlush(), logExport.forceFlush()]);
+    if (document.visibilityState === 'hidden') flush();
   };
   document.addEventListener('visibilitychange', flushOnHide);
+  window.addEventListener('pagehide', flush);
 
   return {
     addError: (error, attributes) => captureError(logger, error, 'manual', attributes),
@@ -112,6 +114,7 @@ export function startRum(c: ResolvedConfig, exporters: Exporters = otlpExporters
       views.uninstall();
       for (const type of ACTIVITY_EVENTS) window.removeEventListener(type, touch, { capture: true });
       document.removeEventListener('visibilitychange', flushOnHide);
+      window.removeEventListener('pagehide', flush);
       sessions.dispose();
       await Promise.all([tracerProvider.shutdown(), loggerProvider.shutdown()]);
       trace.disable();

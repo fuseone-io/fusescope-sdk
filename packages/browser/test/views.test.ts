@@ -56,6 +56,41 @@ describe('installViews', () => {
     expect(viewSpans()[0]?.attributes['fusescope.rum.view.route']).toBe('/products/[slug]');
   });
 
+  it('marks the initial load and route changes', () => {
+    history.pushState(null, '', '/orders/7');
+    history.pushState(null, '', '/cart');
+    expect(viewSpans().map((s) => s.attributes['fusescope.rum.view.loading_type'])).toEqual([
+      'initial_load',
+      'route_change',
+    ]);
+  });
+
+  it('lasts as long as the view is shown', async () => {
+    await new Promise((r) => setTimeout(r, 30));
+    history.pushState(null, '', '/orders/7');
+    const [first] = viewSpans();
+    const [s, ns] = first?.duration ?? [0, 0];
+    expect(s * 1e3 + ns / 1e6).toBeGreaterThanOrEqual(25);
+  });
+
+  it('ends the view on pagehide', () => {
+    window.dispatchEvent(new Event('pagehide'));
+    expect(viewSpans()).toHaveLength(1);
+  });
+
+  it('starts a route_change view when the page is shown again', () => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    views.end();
+    expect(viewSpans()[1]?.attributes).toMatchObject({
+      'fusescope.rum.view.loading_type': 'route_change',
+      'fusescope.rum.view.navigation_type': 'restore',
+      'fusescope.rum.view.route': '/products/:id',
+    });
+  });
+
   it('ends the view when the page is hidden', () => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
     document.dispatchEvent(new Event('visibilitychange'));
