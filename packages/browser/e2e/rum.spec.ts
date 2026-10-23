@@ -66,7 +66,7 @@ test('sampled session: attributes, scrubbing, propagation and events', async ({ 
     'fusescope.rum.platform': 'web',
     'fusescope.rum.application.id': 'e2e-web',
     'telemetry.distro.name': '@fusescope/browser',
-    'telemetry.distro.version': '0.1.0-beta.0',
+    'telemetry.distro.version': '0.2.0-beta.0',
     'telemetry.sdk.language': 'webjs',
   });
 
