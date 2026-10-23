@@ -4,6 +4,11 @@ name: release
 on:
   workflow_dispatch:
     inputs:
+      package:
+        description: Package to release
+        type: choice
+        options: [browser, cli]
+        default: browser
       publish:
         description: Publish to npm (also needs the NPM_PUBLISH_ENABLED variable set to true)
         type: boolean
@@ -14,9 +19,12 @@ permissions:
   id-token: write
 
 jobs:
-  browser:
+  release:
+    name: release @fusescope/${{ inputs.package }}
     runs-on: ubuntu-latest
     environment: npm
+    env:
+      PKG: ${{ inputs.package }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -28,34 +36,37 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint && pnpm typecheck && pnpm test
       - run: pnpm build
-      - run: pnpm --filter @fusescope/browser size
-      - run: pnpm licenses list --prod --json --filter @fusescope/browser | node scripts/licenses.mjs
+      - if: inputs.package == 'browser'
+        run: pnpm --filter @fusescope/browser size
+      - run: pnpm licenses list --prod --json --filter "@fusescope/$PKG" | node scripts/licenses.mjs
       - run: pnpm audit --prod --audit-level low
       - name: SRI hashes
+        if: inputs.package == 'browser'
         run: node scripts/sri.mjs packages/browser/dist | tee -a "$GITHUB_STEP_SUMMARY"
-      - run: ./scripts/sbom.sh "$PWD/sbom-browser.cdx.json"
+      - run: ./scripts/sbom.sh "$PKG" "$PWD/sbom-$PKG.cdx.json"
       - name: Pack
-        working-directory: packages/browser
+        working-directory: packages/${{ inputs.package }}
         run: pnpm pack --pack-destination "$RUNNER_TEMP/pkg"
       - name: Dist-tag
         id: dist
-        working-directory: packages/browser
+        working-directory: packages/${{ inputs.package }}
         run: |
           version=$(node -p "require('./package.json').version")
           case "$version" in *-*) tag=next ;; *) tag=latest ;; esac
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "Publishing $version with dist-tag $tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "Publishing @fusescope/$PKG $version with dist-tag $tag" >> "$GITHUB_STEP_SUMMARY"
       - name: Publish (dry run)
-        working-directory: packages/browser
+        working-directory: packages/${{ inputs.package }}
         run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public --tag "${{ steps.dist.outputs.tag }}" --dry-run
       - name: Publish
         if: inputs.publish && vars.NPM_PUBLISH_ENABLED == 'true'
-        working-directory: packages/browser
+        working-directory: packages/${{ inputs.package }}
         run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public --tag "${{ steps.dist.outputs.tag }}"
       - uses: actions/upload-artifact@v4
         with:
-          name: release-browser
+          name: release-${{ inputs.package }}
+          if-no-files-found: ignore
           path: |
             ${{ runner.temp }}/pkg/*.tgz
             packages/browser/dist/sri.json
-            sbom-browser.cdx.json
+            sbom-${{ inputs.package }}.cdx.json
