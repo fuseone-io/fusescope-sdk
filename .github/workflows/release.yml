@@ -19,6 +19,10 @@ on:
         description: First publish of a new package, with the short-lived NPM_TOKEN secret instead of OIDC
         type: boolean
         default: false
+      promote_latest:
+        description: Point the latest dist-tag at this package.json version (after publishing, or alone)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -76,6 +80,13 @@ jobs:
             export NPM_CONFIG_USERCONFIG="$npmrc"
           fi
           npm publish "$RUNNER_TEMP"/pkg/*.tgz --provenance --access public --tag "${{ steps.dist.outputs.tag }}"
+      - name: Promote to latest
+        if: inputs.promote_latest && vars.NPM_PUBLISH_ENABLED == 'true'
+        working-directory: packages/${{ inputs.package }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          npm dist-tag add "@fusescope/$PKG@$version" latest
+          echo "latest → @fusescope/$PKG@$version" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ inputs.package }}
