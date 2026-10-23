@@ -27,10 +27,16 @@ export function check(report) {
   return problems;
 }
 
+/** Parses `pnpm licenses list --json` output; pnpm prints plain text when there are no dependencies. */
+export function parseReport(text) {
+  const t = text.trim();
+  return !t || t.startsWith('No licenses') ? {} : JSON.parse(t);
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const chunks = [];
   for await (const c of process.stdin) chunks.push(c);
-  const report = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+  const report = parseReport(Buffer.concat(chunks).toString('utf8'));
   const problems = check(report);
   for (const [license, packages] of Object.entries(report))
     console.log(`${license}: ${packages.map((p) => p.name).join(', ')}`);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { check } from './licenses.mjs';
+import { check, parseReport } from './licenses.mjs';
 
 const pkg = (name, version) => ({ name, versions: [version] });
 
@@ -24,4 +24,10 @@ test('rejects licences outside the allowlist', () => {
 test('rejects ua-parser-js 2.x whatever it declares', () => {
   assert.equal(check({ MIT: [pkg('ua-parser-js', '1.0.40')] }).length, 0);
   assert.match(check({ MIT: [pkg('ua-parser-js', '2.0.0')] })[0], /AGPL/);
+});
+
+test('reads a package without production dependencies as an empty report', () => {
+  assert.deepEqual(parseReport('No licenses in packages found\n'), {});
+  assert.deepEqual(parseReport(''), {});
+  assert.deepEqual(parseReport('{"MIT":[]}'), { MIT: [] });
 });
