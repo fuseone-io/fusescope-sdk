@@ -6,7 +6,7 @@ homologated, not mandatory: FuseScope accepts any OTLP client.
 
 | Package | Status |
 |---|---|
-| [`@fusescope/browser`](packages/browser) | 0.1, npm |
+| [`@fusescope/browser`](packages/browser) | 0.2 beta, npm and script tag (CDN) |
 | [`@fusescope/cli`](packages/cli) | 0.1 beta: `fusescope sourcemaps upload` |
 | `@fusescope/browser-react` | planned: router integration, error boundary |
 
