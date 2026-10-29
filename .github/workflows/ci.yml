@@ -27,6 +27,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - name: Script-tag bundle and SRI
+        run: pnpm --filter @fusescope/browser test:dist
       - name: Bundle-size budget
         run: pnpm --filter @fusescope/browser size
       - name: Licence check (production dependencies)

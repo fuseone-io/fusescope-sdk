@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import pkg from '../package.json' with { type: 'json' };
 import { logRecords, received, spans } from './otlp';
 
 const hide = (page: Page) =>
@@ -66,7 +67,7 @@ test('sampled session: attributes, scrubbing, propagation and events', async ({ 
     'fusescope.rum.platform': 'web',
     'fusescope.rum.application.id': 'e2e-web',
     'telemetry.distro.name': '@fusescope/browser',
-    'telemetry.distro.version': '0.2.0-beta.0',
+    'telemetry.distro.version': pkg.version,
     'telemetry.sdk.language': 'webjs',
   });
 
@@ -200,4 +201,13 @@ test('session rotates after inactivity and links the previous one', async ({ pag
   expect(after?.['session.id']).toMatch(/^[0-9a-f]{32}$/);
   expect(after?.['session.id']).not.toBe(before?.['session.id']);
   expect(after?.['session.previous_id']).toBe(before?.['session.id']);
+});
+
+test('script tag with SRI: a matching hash loads the bundle, another one blocks it', async ({ page, request }) => {
+  await page.goto('/sri?sri=valid');
+  await page.evaluate(() => FuseScope.shutdown());
+  expect(spans(await received(request)).filter((s) => s.name === 'view')).toHaveLength(1);
+
+  await page.goto('/sri?sri=invalid');
+  expect(await page.evaluate(() => typeof (window as { FuseScope?: unknown }).FuseScope)).toBe('undefined');
 });

@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { build } from 'esbuild';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
@@ -34,5 +35,9 @@ await build({
   metafile: false,
   banner: { js: `/*! ${pkg.name} ${pkg.version} | Apache-2.0 | includes OpenTelemetry (Apache-2.0) */` },
 });
+
+// `integrity` attribute value for the script tag.
+const sri = `sha384-${createHash('sha384').update(readFileSync('dist/fusescope.min.js')).digest('base64')}`;
+writeFileSync('dist/fusescope.min.js.sri', `${sri}\n`);
 
 execFileSync('tsc', ['-p', 'tsconfig.build.json'], { stdio: 'inherit' });

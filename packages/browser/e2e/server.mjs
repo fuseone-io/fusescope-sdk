@@ -32,6 +32,20 @@ const cors = (req) => ({
 const recordApi = (req, port) =>
   received.api.push({ port, host: req.headers.host, url: req.url, traceparent: req.headers.traceparent ?? null });
 
+// `?sri=valid` or `?sri=invalid` loads the bundle with an integrity attribute.
+const page = async (sri) => {
+  const html = await readFile(new URL('e2e/index.html', root), 'utf8');
+  if (!sri) return html;
+  const hash =
+    sri === 'valid'
+      ? (await readFile(new URL('dist/fusescope.min.js.sri', root), 'utf8')).trim()
+      : `sha384-${'A'.repeat(64)}`;
+  return html.replace(
+    '<script src="/dist/fusescope.min.js">',
+    `<script src="/dist/fusescope.min.js" integrity="${hash}" crossorigin="anonymous">`,
+  );
+};
+
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (url.pathname === '/__received') return json(res, 200, received);
@@ -50,7 +64,7 @@ createServer(async (req, res) => {
     return res.end(file);
   }
   res.writeHead(200, { 'content-type': 'text/html' });
-  res.end(await readFile(new URL('e2e/index.html', root)));
+  res.end(await page(url.searchParams.get('sri')));
 }).listen(APP_PORT);
 
 createServer(async (req, res) => {
