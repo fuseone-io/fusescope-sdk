@@ -32,20 +32,33 @@ init({
 });
 ```
 
-The package ships ESM only, for bundlers (Vite, webpack, Next.js, …).
+The npm entry is ESM, for bundlers (Vite, webpack, Next.js, …).
 
-### Script tag (coming soon)
+### Script tag
 
-A versioned, immutable CDN build with SRI hashes, and the same bundle served by the FuseScope backend at
-`/rum/sdk/browser/<version>.js`, come in a later release. The build already exists
-(`dist/fusescope.min.js`, exposed as `window.FuseScope`):
+`dist/fusescope.min.js` bundles everything into one minified file that exposes the same API as
+`window.FuseScope`. Each version is immutable; take its `integrity` value from
+`dist/fusescope.min.js.sri` in the package, or from the release notes.
 
 ```html
-<script src="…/fusescope.min.js" integrity="sha384-…" crossorigin="anonymous"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/@fusescope/browser@0.2.0-beta.1/dist/fusescope.min.js"
+  integrity="sha384-…"
+  crossorigin="anonymous"
+></script>
 <script>
-  FuseScope.init({ applicationId: '01a16431-12ca-7064-bae9-6ac64cf20a29', publicKey: 'rum_pub_…', service: 'shop-web', endpoint: 'https://fusescope.example.com' });
+  FuseScope.init({
+    applicationId: '01a16431-12ca-7064-bae9-6ac64cf20a29',
+    publicKey: 'rum_pub_…',
+    service: 'shop-web',
+    endpoint: 'https://fusescope.example.com',
+  });
 </script>
 ```
+
+The same files are served from FuseOne's CDN at `https://cdn.fuseone.io/browser/<version>/fusescope.min.js`
+(not live yet), with the same `integrity`. Pin an exact version: `integrity` changes with every release.
+The FuseScope backend will also serve the bundle it ships with, for self-hosted and air-gapped setups.
 
 ## API
 
@@ -201,7 +214,7 @@ Node 22 and pnpm 10 (`npx -y pnpm@10`).
 ```bash
 pnpm install
 pnpm lint && pnpm typecheck && pnpm test   # Biome, tsc, Vitest
-pnpm build && pnpm --filter @fusescope/browser size
+pnpm build && pnpm --filter @fusescope/browser test:dist && pnpm --filter @fusescope/browser size
 pnpm --filter @fusescope/browser exec playwright install chromium
 pnpm --filter @fusescope/browser test:e2e  # Playwright on ports 4400 and 4401
 ```
@@ -216,8 +229,15 @@ pnpm --filter @fusescope/browser test:e2e  # Playwright on ports 4400 and 4401
 ## Releasing
 
 `.github/workflows/release.yml` runs on manual dispatch only. It builds, tests, checks licences and CVEs,
-writes the SBOM (CycloneDX) and SRI hashes, packs, dry-runs, and publishes with provenance. The dist-tag
-is `next` for prereleases and `latest` otherwise.
+writes the SBOM (CycloneDX), packs, dry-runs, and publishes with provenance. The dist-tag is `next` for
+prereleases and `latest` otherwise. The build writes the SRI hash to `dist/fusescope.min.js.sri`, and the
+run summary shows the script tag with it.
+
+After publishing `@fusescope/browser`, the run uploads `fusescope.min.js`, its `.map` and `.sri` to the
+Cloudflare R2 bucket `fusescope-cdn` (the `R2_BUCKET` variable overrides it) under `browser/<version>/`,
+with `Cache-Control: public, max-age=31536000, immutable`. It fails if that version is already there, and
+is skipped with a notice when the `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` secrets
+are not set.
 
 Publishing uses npm trusted publishing (OIDC): no npm token is stored. It needs:
 
