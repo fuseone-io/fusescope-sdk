@@ -50,6 +50,7 @@
     "size": "node scripts/size.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:dist": "vitest run --config vitest.dist.config.ts",
     "test:e2e": "playwright test",
     "prepack": "cp ../../NOTICE NOTICE"
   },
