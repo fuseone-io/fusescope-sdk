@@ -1,6 +1,6 @@
 {
   "name": "@fusescope/browser-react",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0-beta.1",
   "description": "FuseScope RUM for React: React Router view patterns and a render error boundary",
   "license": "Apache-2.0",
   "author": "FuseOne",
