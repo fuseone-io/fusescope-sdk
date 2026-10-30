@@ -44,7 +44,7 @@ function App() {
         <Link to="/products/red-shoe">Red shoe</Link> <Link to="/products/blue-boot">Blue boot</Link>{' '}
         <Link to="/broken">Throw render error</Link>
       </nav>
-      <ErrorBoundary key={location.pathname} fallback={<p role="alert">The example failed to render.</p>}>
+      <ErrorBoundary resetKeys={[location.pathname]} fallback={<p role="alert">The example failed to render.</p>}>
         <Pages />
       </ErrorBoundary>
       <button type="button" onClick={() => void FuseScope.setConsent(true)}>

@@ -61,3 +61,11 @@ test('consent gates both route views and render errors', async ({ page, request 
     )
     .toBe(1);
 });
+
+test('navigating away from a failed page recovers without remounting the boundary', async ({ page }) => {
+  await page.goto('/broken');
+  await expect(page.getByRole('alert')).toBeVisible();
+  await page.getByRole('link', { name: 'Blue boot' }).click();
+  await expect(page.getByRole('heading')).toHaveText('Product: blue-boot');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});

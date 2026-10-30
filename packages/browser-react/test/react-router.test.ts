@@ -17,6 +17,11 @@ const routes: RouteObject[] = [
 ];
 
 describe('reactRouterRouteTemplate', () => {
+  it('returns a bounded fallback for route configurations rejected by React Router', () => {
+    const invalidRoutes: RouteObject[] = [{ path: '/parent', children: [{ path: '/elsewhere' }] }];
+    expect(reactRouterRouteTemplate(invalidRoutes)('/parent')).toBe('/*');
+  });
+
   it.each([
     ['/', '/'],
     ['/products/red-shoe', '/products/:productId'],
