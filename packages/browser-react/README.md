@@ -2,10 +2,12 @@
 
 React adapters for `@fusescope/browser`. Apache-2.0; see [NOTICE](../../NOTICE).
 
-- `ErrorBoundary` (root entry): accepts `children` and a required `fallback` React node or render function `({ error, reset }) => ReactNode`. Reports caught render/lifecycle errors through `browser.addError()`, which sets `fusescope.rum.error.source=manual`, with the React component stack in `fusescope.rum.react.component_stack`. Pass `resetKeys={[location.pathname]}` to recover on navigation, or call `reset()` from the fallback to retry. Keys are compared with `Object.is`; a different React `key` also resets the boundary. Component stacks are scrubbed of URL queries/fragments and truncated to the first 4,096 characters, independently of the browser SDK’s URL privacy setting. Event-handler and async errors still use the browser SDK.
+- `ErrorBoundary` (root entry): accepts `children` and a required `fallback` React node or render function `({ error, reset }) => ReactNode`. Reports caught render/lifecycle errors through `browser.addError()`, which sets `fusescope.rum.error.source=manual`, with the React component stack in `fusescope.rum.react.component_stack`. Pass `resetKeys={[location.pathname]}` to recover on navigation, or call `reset()` from the fallback to retry. Keys are compared with `Object.is`; a different React `key` also resets the boundary. Component stacks are trimmed of surrounding whitespace, scrubbed of URL queries/fragments and truncated to the first 4,096 characters, independently of the browser SDK’s URL privacy setting. Event-handler and async errors still use the browser SDK.
 - `reactRouterRouteTemplate(routes, basename?)` (`@fusescope/browser-react/react-router`): pass its return value as `routeTemplate` to `browser.init()` before mounting the router. Uses React Router's matcher and declared paths, including nested/index/pathless/optional/splat routes; unmatched paths or malformed route configurations use `/*`. It adds no history listeners or view spans: the browser SDK creates one view per pathname navigation. The same pattern can therefore have several visits.
 
-Peers: `@fusescope/browser` 0.2 beta or later, React 18/19. The optional router entry requires React Router 6.30.6+ or 7.18.5+. The error boundary entry does not import the router. Browser history routers (`BrowserRouter`, `createBrowserRouter`) are supported; hash and memory routers do not create pathname navigations and are outside this adapter's scope.
+Peers: `@fusescope/browser` `^0.2.0-beta.1` (0.2.0-beta.1 or a later 0.2.0 prerelease, or any 0.2.x release; not 0.3), React 18/19. The optional router entry requires React Router 6.30.6+ or 7.18.5+. The error boundary entry does not import the router.
+
+The router entry imports `react-router`, not `react-router-dom`. An app that lists only `react-router-dom` (usual with React Router 6) must also add `react-router` as a direct dependency, at the same version, under installers that don't hoist transitive dependencies, such as pnpm. Browser history routers (`BrowserRouter`, `createBrowserRouter`) are supported; hash and memory routers do not create pathname navigations and are outside this adapter's scope.
 
 Setup, consent, data-router boundary placement and verification: [React setup guide](https://fuseone-io.github.io/fusescope-docs/frontend/set-up-react/).
 
@@ -13,7 +15,7 @@ Setup, consent, data-router boundary placement and verification: [React setup gu
 
 Call `browser.init()` **before** `createRoot().render()`. Errors caught before initialization (or while waiting for consent) are dropped, not buffered.
 
-React development builds, including React 18, can rethrow a caught error to `window.onerror`. The browser SDK may then also report it with source `onerror`, in addition to the boundary’s `manual` event. Production builds do not have this development rethrow.
+React 18 development builds rethrow an error caught by a boundary to `window.onerror`, so the browser SDK also reports it with source `onerror`, in addition to the boundary’s `manual` event. React 18 production builds and React 19 do not: React 19 passes caught errors to the root's `onCaughtError`, which by default logs them with `console.error`, and the browser SDK does not report console output.
 
 ## Development sample
 
