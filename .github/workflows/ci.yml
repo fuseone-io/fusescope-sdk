@@ -23,10 +23,10 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm build
       - name: Script-tag bundle and SRI
         run: pnpm --filter @fusescope/browser test:dist
       - name: Bundle-size budget
@@ -34,7 +34,7 @@ jobs:
       - name: Licence check (production dependencies)
         run: |
           node --test scripts/licenses.test.mjs
-          for pkg in browser cli; do
+          for pkg in browser cli browser-react; do
             pnpm licenses list --prod --json --filter "@fusescope/$pkg" | node scripts/licenses.mjs
           done
       - name: CLI smoke test
@@ -55,18 +55,39 @@ jobs:
       - run: pnpm build
       - run: pnpm --filter @fusescope/browser exec playwright install --with-deps chromium
       - run: pnpm --filter @fusescope/browser test:e2e
+      - run: pnpm --filter @fusescope/browser-react test:e2e
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: packages/browser/test-results/
+          path: |
+            packages/browser/test-results/
+            packages/browser-react/test-results/
           retention-days: 7
+
+  react-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: React 18 and React Router 6
+        run: pnpm --filter @fusescope/browser-react add --save-dev --save-exact react@18.3.1 react-dom@18.3.1 react-router@6.30.6 react-router-dom@6.30.6
+      - run: pnpm build
+      - run: pnpm --filter @fusescope/browser-react typecheck
+      - run: pnpm --filter @fusescope/browser-react test
+      - run: pnpm --filter @fusescope/browser-react exec playwright install --with-deps chromium
+      - run: pnpm --filter @fusescope/browser-react test:e2e
 
   sbom:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [browser, cli]
+        package: [browser, cli, browser-react]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

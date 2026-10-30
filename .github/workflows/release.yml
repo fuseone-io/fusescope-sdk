@@ -9,7 +9,7 @@ on:
       package:
         description: Package to release
         type: choice
-        options: [browser, cli]
+        options: [browser, cli, browser-react]
         default: browser
       publish:
         description: Publish to npm (also needs the NPM_PUBLISH_ENABLED variable set to true)
@@ -44,8 +44,8 @@ jobs:
           cache: pnpm
       - run: npm install -g npm@^11.5.1
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint && pnpm typecheck && pnpm test
       - run: pnpm build
+      - run: pnpm lint && pnpm typecheck && pnpm test
       - if: inputs.package == 'browser'
         run: pnpm --filter @fusescope/browser test:dist && pnpm --filter @fusescope/browser size
       - run: pnpm licenses list --prod --json --filter "@fusescope/$PKG" | node scripts/licenses.mjs

@@ -1,0 +1,73 @@
+{
+  "name": "@fusescope/browser-react",
+  "version": "0.1.0-beta.0",
+  "description": "FuseScope RUM for React: React Router view patterns and a render error boundary",
+  "license": "Apache-2.0",
+  "author": "FuseOne",
+  "homepage": "https://github.com/fuseone-io/fusescope-sdk/tree/main/packages/browser-react#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fuseone-io/fusescope-sdk.git",
+    "directory": "packages/browser-react"
+  },
+  "bugs": "https://github.com/fuseone-io/fusescope-sdk/issues",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./react-router": {
+      "types": "./dist/react-router.d.ts",
+      "import": "./dist/react-router.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "sample": "node sample/build.mjs && node sample/server.mjs",
+    "prepack": "cp ../../NOTICE NOTICE"
+  },
+  "peerDependencies": {
+    "@fusescope/browser": "^0.2.0-beta.1",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-router": "^6.30.6 || ^7.18.5"
+  },
+  "peerDependenciesMeta": {
+    "react-router": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@fusescope/browser": "workspace:^",
+    "@playwright/test": "1.63.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "esbuild": "0.28.2",
+    "happy-dom": "20.14.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router": "7.18.5",
+    "react-router-dom": "7.18.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}
