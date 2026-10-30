@@ -4,5 +4,5 @@ const URL_IN_STACK = /((?:https?:\/\/|\/)[^\s?#()]*)[?#][^\s()]*?(:\d+(?::\d+)?)
 
 /** Component stacks always omit URL queries/fragments, even if general URL collection is enabled. */
 export function componentStack(stack: string): string {
-  return stack.replace(URL_IN_STACK, '$1$2').slice(0, MAX_STACK_LENGTH);
+  return stack.trim().replace(URL_IN_STACK, '$1$2').slice(0, MAX_STACK_LENGTH);
 }

@@ -136,6 +136,7 @@ describe('ErrorBoundary', () => {
     expect(addError).toHaveBeenCalledExactlyOnceWith(failure, {
       'fusescope.rum.react.component_stack': '\n    at Product (https://shop.example.com/app.js:12:34)'
         .repeat(300)
+        .trim()
         .slice(0, 4096),
     });
   });
