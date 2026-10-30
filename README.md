@@ -8,7 +8,7 @@ homologated, not mandatory: FuseScope accepts any OTLP client.
 |---|---|
 | [`@fusescope/browser`](packages/browser) | 0.2 beta, npm and script tag (CDN) |
 | [`@fusescope/cli`](packages/cli) | 0.1 beta: `fusescope sourcemaps upload` |
-| `@fusescope/browser-react` | planned: router integration, error boundary |
+| [`@fusescope/browser-react`](packages/browser-react) | 0.1 beta: React Router view patterns, error boundary |
 
 Design: [ADR 0003 · Real User Monitoring](https://github.com/fuseone-io/fusescope/blob/main/docs/adr/0003-real-user-monitoring.md).
 
