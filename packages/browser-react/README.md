@@ -9,7 +9,7 @@ Peers: `@fusescope/browser` `^0.2.0-beta.1` (0.2.0-beta.1 or a later 0.2.0 prere
 
 The router entry imports `react-router`, not `react-router-dom`. An app that lists only `react-router-dom` (usual with React Router 6) must also add `react-router` as a direct dependency, at the same version, under installers that don't hoist transitive dependencies, such as pnpm. Browser history routers (`BrowserRouter`, `createBrowserRouter`) are supported; hash and memory routers do not create pathname navigations and are outside this adapter's scope.
 
-Setup, consent, data-router boundary placement and verification: [React setup guide](https://fuseone-io.github.io/fusescope-docs/frontend/set-up-react/).
+Setup, consent, data-router boundary placement and verification: [React setup guide](https://docs.fusescope.fuseone.io/frontend/set-up-react/).
 
 ## Initialization and development errors
 
