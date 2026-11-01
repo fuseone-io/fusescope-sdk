@@ -1,4 +1,19 @@
-# FuseScope SDK
+<p align="center">
+  <img alt="FuseScope" src=".github/brand/fusescope-logo-universal.svg" width="440">
+</p>
+
+<h1 align="center">FuseScope SDK</h1>
+
+<p align="center">
+  <b>OpenTelemetry-based SDKs that send Real User Monitoring data to FuseScope.</b>
+</p>
+
+<p align="center">
+  <a href="https://docs.fusescope.fuseone.io/frontend/real-user-monitoring/">Docs</a> ·
+  <a href="https://www.npmjs.com/package/@fusescope/browser">npm</a> ·
+  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-0f5fb8"></a>
+  <a href="https://github.com/fuseone-io/fusescope-sdk/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/fuseone-io/fusescope-sdk?color=950fb8"></a>
+</p>
 
 FuseScope's client SDK distributions: thin, tested packages over [OpenTelemetry](https://opentelemetry.io/)
 that send Real User Monitoring data to [FuseScope](https://github.com/fuseone-io/fusescope). They are
